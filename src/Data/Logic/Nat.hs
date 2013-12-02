@@ -1,12 +1,12 @@
 {-# LANGUAGE Safe, TypeFamilies #-}
 
 module Data.Logic.Nat (
-    Nat, nat,
+    Nat,
 
-    -- * Constructors
-    zero, next,
+    -- * Construction
+    nat, zero, next,
 
-    -- * Destructor
+    -- * Destruction
     prev,
 
     -- * Utilities
