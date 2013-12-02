@@ -34,7 +34,6 @@ instance Term Nat where
 
 -- |Constructs a natural number.
 nat :: Integer -> Var Nat s
-nat 0 = zero
 nat n | n == 0 = zero
       | n > 0 = bind $ Next $ nat (n - 1)
       | otherwise = error $ "Invalid natural, '" ++ show n ++ "'"
