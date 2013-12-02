@@ -62,8 +62,7 @@ from3 f = do
     return (x, y, z)
 
 -- |A synonym for unify, specifically for `Var`s.
--- Meant to be used in infix
--- form.
+-- Meant to be used in infix form.
 --
 -- >  x \`is\` y
 is :: Term a => Var a s -> Var a s -> Predicate s ()

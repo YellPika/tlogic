@@ -54,9 +54,7 @@ solveAll :: Term a => (forall s. Predicate s (Var a s)) -> [Collapse a]
 solveAll p = runST $ observeAllT $ unPredicate $ p >>= collapse
 
 -- |A unifiable and possibly uninstantiated value.
-data Var a s
-    = Reference (STRef s (Maybe (Var a s)))
-    | Binding (a s)
+data Var a s = Reference (STRef s (Maybe (Var a s))) | Binding (a s)
 
 -- |An uninstantiated `Var`.
 auto :: Term a => Predicate s (Var a s)
