@@ -48,7 +48,7 @@ nil = bind Nil
 
 -- |@cons x xs@ constructs a list with @x@ as the first element, and @xs@ as the rest.
 cons :: Term a => Var a s -> Var (List a) s -> Var (List a) s
-cons = (bind .) . Cons
+cons x xs = bind (Cons x xs)
 
 -- |@decons zs x xs@ instantiates its arguments such that @zs@ is @x:xs@.
 decons :: Term a => Var (List a) s -> Var a s -> Var (List a) s -> Predicate s ()

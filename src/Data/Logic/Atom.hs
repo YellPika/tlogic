@@ -14,7 +14,7 @@ newtype Atom a s = Atom a
 instance Eq a => Term (Atom a) where
     type Collapse (Atom a) = a
     collapse (Atom x) = return x
-    unify (Atom x) (Atom y) = bool $ x == y
+    unify (Atom x) (Atom y) = bool (x == y)
 
 -- |Constructs an atom.
 atom :: Eq a => a -> Var (Atom a) s

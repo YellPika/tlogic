@@ -30,7 +30,7 @@ instance (Term a, Term b) => Term (Pair a b) where
 
 -- |Constructs a pair of terms.
 pair :: (Term a, Term b) => Var a s -> Var b s -> Var (Pair a b) s
-pair x y = bind $ Pair x y
+pair x y = bind (Pair x y)
 
 -- |Constructs a pair of atoms.
 pair' :: (Eq a, Eq b) => a -> b -> Var (Pair (Atom a) (Atom b)) s
