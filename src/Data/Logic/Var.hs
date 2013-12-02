@@ -64,7 +64,7 @@ from3 f = do
 -- |A synonym for unify, specifically for `Var`s.
 -- Meant to be used in infix form.
 --
--- >  x \`is\` y
+-- >  x `is` y
 is :: Term a => Var a s -> Var a s -> Predicate s ()
 is = unify
 
