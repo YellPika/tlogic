@@ -10,7 +10,7 @@ module Data.Logic.Nat (
     prev,
 
     -- * Utilities
-    add
+    add, sub, mult, divd, invert
 ) where
 
 import Control.Monad.Predicate
@@ -39,9 +39,13 @@ nat n | n == 0 = zero
       | n > 0 = bind $ Next $ nat (n - 1)
       | otherwise = error $ "Invalid natural, '" ++ show n ++ "'"
 
--- |The first natural number.
+-- |The `Nat` representation of zero.
 zero :: Var Nat s
 zero = bind Zero
+
+-- |The `Nat` representation of one.
+one :: Var Nat s
+one = next zero
 
 -- |@next n@ computes @n + 1@.
 next :: Var Nat s -> Var Nat s
@@ -59,3 +63,37 @@ add x y z =
     <|>
     do  x' <- from (prev x)
         add x' (next y) z
+
+-- |@sub x y z@ unifies its arguments such that @x - y = z@.
+sub :: Var Nat s -> Var Nat s -> Var Nat s -> Predicate s ()
+sub = invert add
+
+-- |@mult x y z@ unifies its arguments such that @x * y = z@.
+mult :: Var Nat s -> Var Nat s -> Var Nat s -> Predicate s ()
+mult x y z =
+    do  x `is` zero
+        y `is` zero
+        z `is` zero
+    <|>
+    do  x `is` zero <|> y `is` zero
+        z `is` zero
+    <|>
+    do  x `is` one
+        y `is` z
+    <|>
+    do  y `is` one
+        x `is` z
+    <|>
+    do  x' <- from (prev x)
+        z' <- from (sub z x)
+        mult x' y z'
+
+-- |@divd x y z@ unifies its arguments such that @x / y = z@.
+divd :: Var Nat s -> Var Nat s -> Var Nat s -> Predicate s ()
+divd = invert mult
+
+-- |Inverts a binary operation. For example, @sub = invert add@.
+invert ::
+    (Var Nat s -> Var Nat s -> Var Nat s -> Predicate s ()) ->
+     Var Nat s -> Var Nat s -> Var Nat s -> Predicate s ()
+invert f x y z = f y z x
