@@ -18,6 +18,7 @@ library
                        Data.Logic.Atom,
                        Data.Logic.Choice,
                        Data.Logic.List,
+                       Data.Logic.Nat,
                        Data.Logic.Pair,
                        Data.Logic.Term,
                        Data.Logic.Var

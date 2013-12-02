@@ -1,7 +1,7 @@
 {-# LANGUAGE Safe, TypeFamilies #-}
 
 module Data.Logic.Atom (
-    Atom, atom
+    Atom, atom, unit
 ) where
 
 import Control.Monad.Predicate
@@ -19,3 +19,7 @@ instance Eq a => Term (Atom a) where
 -- |Constructs an atom.
 atom :: Eq a => a -> Var (Atom a) s
 atom = bind . Atom
+
+-- |Synonym for @atom ()@.
+unit :: Var (Atom ()) s
+unit = atom ()
