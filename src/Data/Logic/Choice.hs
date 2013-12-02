@@ -50,7 +50,7 @@ right :: (Term a, Term b) => Var (Choice a b) s -> Var b s -> Predicate s ()
 right c x = c `is` choice (Right x)
 
 -- |@swap x y@ instantiates its arguments such that @x@ and
--- @y@ are opposite value types that contain the same value.
+-- @y@ have opposite value types, but contain the same value.
 swap :: (Term a, Term b) => Var (Choice a b) s -> Var (Choice b a) s -> Predicate s ()
 swap x y =
     do  z <- auto

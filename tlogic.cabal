@@ -10,11 +10,12 @@ maintainer:          yellpika@gmail.com
 copyright:           Copyright © Anthony Vandikas, 2013
 category:            Control, Data, Logic, Unification
 build-type:          Simple
--- extra-source-files:  
+extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
   exposed-modules:     Control.Monad.Predicate,
+                       Data.Logic,
                        Data.Logic.Atom,
                        Data.Logic.Choice,
                        Data.Logic.List,

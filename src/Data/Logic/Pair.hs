@@ -7,7 +7,7 @@ module Data.Logic.Pair (
     pair, pair',
 
     -- *Deconstruction
-    first, second,
+    left, right,
 
     -- *Utilities
     swap
@@ -36,15 +36,15 @@ pair x y = bind (Pair x y)
 pair' :: (Eq a, Eq b) => a -> b -> Var (Pair (Atom a) (Atom b)) s
 pair' x y = pair (atom x) (atom y)
 
--- |@first x p@ instantiates its arguments such that @p@ is @(x, _)@.
-first :: (Term a, Term b) => Var a s -> Var (Pair a b) s -> Predicate s ()
-first x p = do
+-- |@left x p@ instantiates its arguments such that @p@ is @(x, _)@.
+left :: (Term a, Term b) => Var a s -> Var (Pair a b) s -> Predicate s ()
+left x p = do
     y <- auto
     p `is` pair x y
 
--- |@second x p@ instantiates its arguments such that @p@ is @(_, x)@.
-second :: (Term a, Term b) => Var b s -> Var (Pair a b) s -> Predicate s ()
-second y p = do
+-- |@right x p@ instantiates its arguments such that @p@ is @(_, x)@.
+right :: (Term a, Term b) => Var b s -> Var (Pair a b) s -> Predicate s ()
+right y p = do
     x <- auto
     p `is` pair x y
 
