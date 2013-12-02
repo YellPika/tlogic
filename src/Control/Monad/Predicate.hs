@@ -1,10 +1,20 @@
 {-# LANGUAGE Safe #-}
 
 module Control.Monad.Predicate (
-    Predicate, true, false, bool, solve, solveAll
+    module Control.Monad.Logic,
+
+    Predicate,
+
+    -- * Solving
+    solve, solveAll,
+
+    -- * Simple predicates.
+    true, false, bool
 ) where
 
 import Control.Monad.Predicate.Internal
+
+import Control.Monad.Logic
 import Control.Applicative (empty)
 
 -- |A predicate computation that always succeeds.
