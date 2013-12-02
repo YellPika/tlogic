@@ -3,14 +3,14 @@
 module Data.Logic.Var (
     Var,
 
-    -- * Uninstantiated variable creation
+    -- * Uninstantiated Variable Creation
     auto, auto2, auto3, auto4, auto5,
     from, from2, from3,
 
     -- * Binding
     bind,
 
-    -- * Unification and instantiation
+    -- * Unification and Instantiation
     is, inst
 ) where
 
