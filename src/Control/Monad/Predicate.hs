@@ -8,7 +8,7 @@ module Control.Monad.Predicate (
     -- * Solving
     solve, solveAll,
 
-    -- * Simple predicates.
+    -- * Simple Predicates
     true, false, bool
 ) where
 
