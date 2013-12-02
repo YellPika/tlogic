@@ -19,6 +19,7 @@ import Data.Logic.Var
 
 import Control.Applicative ((<|>), (<$>))
 
+-- |Natural number terms.
 data Nat s = Zero | Next (Var Nat s)
 
 instance Term Nat where
