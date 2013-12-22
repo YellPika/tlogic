@@ -30,5 +30,5 @@ false = empty
 
 -- |@bool x@ succeeds if @x@ is true, and fails otherwise.
 bool :: Bool -> Predicate s ()
-bool True = true
+bool True  = true
 bool False = false

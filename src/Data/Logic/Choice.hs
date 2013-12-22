@@ -26,12 +26,12 @@ data Choice a b s = A (Var a s) | B (Var b s)
 instance (Term a, Term b) => Term (Choice a b) where
     type Collapse (Choice a b) = Either (Collapse a) (Collapse b)
 
-    collapse (A x) = Left <$> collapse x
+    collapse (A x) = Left  <$> collapse x
     collapse (B x) = Right <$> collapse x
 
     unify (A x) (A y) = unify x y
     unify (B x) (B y) = unify x y
-    unify _ _ = false
+    unify _     _     = false
 
     occurs v (A x) = occurs v x
     occurs v (B x) = occurs v x
@@ -57,9 +57,9 @@ right c x = c `is` choice (Right x)
 swap :: (Term a, Term b) => Var (Choice a b) s -> Var (Choice b a) s -> Predicate s ()
 swap x y =
     do  z <- auto
-        left x z
+        left  x z
         right y z
     <|>
     do  z <- auto
         right x z
-        left y z
+        left  y z

@@ -25,20 +25,20 @@ data Nat s = Zero | Next (Var Nat s)
 instance Term Nat where
     type Collapse Nat = Integer
 
-    collapse Zero = return 0
+    collapse Zero     = return 0
     collapse (Next n) = (+ 1) <$> collapse n
 
-    unify Zero Zero = true
+    unify Zero     Zero     = true
     unify (Next n) (Next m) = unify n m
-    unify _ _ = false
+    unify _         _       = false
 
-    occurs _ Zero = return False
+    occurs _ Zero     = return False
     occurs v (Next x) = occurs v x
 
 -- |Constructs a natural number.
 nat :: Integer -> Var Nat s
-nat n | n == 0 = zero
-      | n > 0 = bind $ Next $ nat (n - 1)
+nat n | n == 0    = zero
+      | n > 0     = bind $ Next $ nat (n - 1)
       | otherwise = error $ "Invalid natural, '" ++ show n ++ "'"
 
 -- |The `Nat` representation of zero.

@@ -26,19 +26,19 @@ data List a s = Nil | Cons !(Var a s) !(Var (List a) s)
 instance Term a => Term (List a) where
     type Collapse (List a) = [Collapse a]
 
-    collapse Nil = return []
+    collapse Nil         = return []
     collapse (Cons x xs) = (:) <$> collapse x <*> collapse xs
 
-    unify Nil Nil = true
+    unify Nil         Nil         = true
     unify (Cons x xs) (Cons y ys) = unify x y >> unify xs ys
-    unify _ _ = false
+    unify _           _           = false
 
     occurs _ Nil = return False
     occurs v (Cons x xs) = (||) <$> occurs v x <*> occurs v xs
 
 -- |Creates a new term list.
 list :: Term a => [Var a s] -> Var (List a) s
-list [] = bind Nil
+list []     = bind Nil
 list (x:xs) = bind $ Cons x $ list xs
 
 -- |Creates a list of atoms.
@@ -89,5 +89,5 @@ append xs ys zs =
         ys `is` zs
     <|>
     do  (x', xs') <- from2 $ decons xs
-        zs' <- from $ decons zs x'
+        zs'       <- from  $ decons zs x'
         append xs' ys zs'
