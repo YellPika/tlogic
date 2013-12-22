@@ -2,27 +2,49 @@
 
 module Control.Monad.Predicate.Internal (
     Predicate,
-    Term (..), solve, solveAll,
+    OccursCheck (..), withOccursCheck,
+    Term (..), Unbound, solve, solveAll,
     Var, auto, bind, unbound
 ) where
 
 import Control.Applicative (Alternative, Applicative, (<$>), empty)
-import Control.Monad (MonadPlus)
+import Control.Monad (MonadPlus, when, guard)
 import Control.Monad.Logic (LogicT (..), observeAllT, observeT, lift)
 import Control.Monad.Logic.Class (MonadLogic)
 import Control.Monad.ST.Lazy (ST, runST)
+import Control.Monad.Trans.Reader (ReaderT (..), asks, local)
 import Data.STRef.Lazy (STRef, newSTRef, readSTRef, writeSTRef)
 import Unsafe.Coerce (unsafeCoerce)
 
+-- |Describes how a `Predicate` computation should handle the occurs check.
+data OccursCheck
+    = Error -- ^The occurs check will throw an exception.
+    | Fail  -- ^The occurs check will cause the computation to backtrack.
+    | Off   -- ^Do not perform the occurs check. This is the default value.
+  deriving (Eq, Show)
+
+-- Why a full blown record? I might add stuff later.
+data Settings = Settings {
+    occursCheck :: OccursCheck
+}
+
 -- |Describes a computation that supports backtracking and unification.
-newtype Predicate s a = Predicate { unPredicate :: LogicT (ST s) a }
+newtype Predicate s a = Predicate { unPredicate :: ReaderT Settings (LogicT (ST s)) a }
   deriving (Alternative, Applicative, Functor, Monad, MonadLogic, MonadPlus)
 
+-- |Executes a predicate with the specified occurs check setting.
+--
+-- Example:
+-- 
+-- > withOccursCheck Fail (x `is` cons unit x)
+withOccursCheck :: OccursCheck -> Predicate s a -> Predicate s a
+withOccursCheck c = Predicate . local (\x -> x { occursCheck = c }) . unPredicate
+
 readRef :: STRef s a -> Predicate s a
-readRef = Predicate . lift . readSTRef
+readRef = Predicate . lift . lift . readSTRef
 
 writeRef :: STRef s a -> a -> Predicate s ()
-writeRef r x = Predicate $ LogicT $ \s f -> do
+writeRef r x = Predicate $ lift $ LogicT $ \s f -> do
     -- Save current state.
     x' <- readSTRef r
 
@@ -43,19 +65,26 @@ class Term a where
     -- |Unifies two values of the same type.
     unify :: a s -> a s -> Predicate s ()
 
-    -- |`occurs v t` determines if the unbound variable `v` occurs in the term `a`.
+    -- |@occurs v t@ determines if the unbound variable `v` occurs in the term `a`.
     occurs :: Unbound b s -> a s -> Predicate s Bool
 
 -- |Takes a predicate that returns a fully instantiated term, and collapses the
 -- return value. If the term is not fully instantiated, this function fails.
 solve :: Term a => (forall s. Predicate s (Var a s)) -> Collapse a
-solve p = runST $ observeT $ unPredicate $ p >>= collapse
+solve p = evalWith observeT (p >>= collapse)
 
 -- |Takes a predicate that returns a fully instantiated term, and collapses all
 -- possible results. If the term is not fully instantiated, this function
 -- returns no results.
 solveAll :: Term a => (forall s. Predicate s (Var a s)) -> [Collapse a]
-solveAll p = runST $ observeAllT $ unPredicate $ p >>= collapse
+solveAll p = evalWith observeAllT (p >>= collapse)
+
+evalWith :: (forall s. LogicT (ST s) a -> ST s b) -> (forall s. Predicate s a) -> b
+evalWith f p = runST $ f $ runReaderT (unPredicate p) defaultSettings
+  where
+    defaultSettings = Settings {
+        occursCheck = Off
+    }
 
 -- |A unifiable and possibly uninstantiated value.
 data Var a s = Reference (STRef s (Maybe (Var a s))) | Binding (a s)
@@ -65,7 +94,7 @@ newtype Unbound a s = Unbound (STRef s (Maybe (Var a s)))
 
 -- |An uninstantiated `Var`.
 auto :: Term a => Predicate s (Var a s)
-auto = Predicate $ lift $ Reference <$> newSTRef Nothing
+auto = Predicate $ lift $ lift $ Reference <$> newSTRef Nothing
 
 -- |Lifts a term into a `Var`.
 bind :: Term a => a s -> Var a s
@@ -87,25 +116,34 @@ instance Term a => Term (Var a) where
     unify v1 v2 = do
         x <- reduce v1
         y <- reduce v2
-        unify' x y
+        unifyReduced x y
       where
-        unify' (Binding x) (Binding y) = unify x y
-        unify' (Reference x) (Reference y) | x == y = return ()
-        unify' (Reference x) y = do
-            test <- occurs (Unbound x) y
-            if test
-                then error "Occurs check failed."
-                else writeRef x (Just y)
-        unify' x y = unify' y x
+        unifyReduced (Binding x) (Binding y) = unify x y
+        unifyReduced (Reference x) (Reference y) | x == y = return ()
+        unifyReduced (Reference x) y = unifyRef x y
+        unifyReduced x (Reference y) = unifyRef y x
 
-        reduce v@(Binding _) = return v
+        unifyRef x y = do
+            check <- Predicate (asks occursCheck)
+            when (check /= Off) $ do
+                test <- occurs (Unbound x) y
+                when test $ do
+                    -- Don't throw the error if we're only supposed to backtrack.
+                    guard (check /= Fail)
+                    error "Occurs check failed."
+
+            writeRef x (Just y)
+
         reduce v@(Reference x) = do
             result <- readRef x
             case result of
                 Nothing -> return v
                 Just x' -> reduce x'
+        reduce v = return v
 
-    occurs x (Binding y) = occurs x y
-    occurs x@(Unbound ref) (Reference y)
-        | unsafeCoerce ref == y = return True
-        | otherwise = readRef y >>= maybe (return False) (occurs x)
+    occurs x@(Unbound ref) = occurs'
+      where
+        occurs' (Binding y) = occurs x y
+        occurs' (Reference y)
+            | unsafeCoerce ref == y = return True
+            | otherwise = readRef y >>= maybe (return False) occurs'

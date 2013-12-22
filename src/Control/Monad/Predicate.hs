@@ -9,7 +9,10 @@ module Control.Monad.Predicate (
     solve, solveAll,
 
     -- * Simple Predicates
-    true, false, bool
+    true, false, bool,
+
+    -- * Settings
+    OccursCheck (..), withOccursCheck
 ) where
 
 import Control.Monad.Predicate.Internal

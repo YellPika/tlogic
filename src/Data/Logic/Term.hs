@@ -1,7 +1,7 @@
 {-# LANGUAGE Safe #-}
 
 module Data.Logic.Term (
-    Term (..)
+    Term (..), Unbound
 ) where
 
 import Control.Monad.Predicate.Internal
