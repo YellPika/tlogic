@@ -13,6 +13,7 @@ import Control.Monad.Logic (LogicT (..), observeAllT, observeT, lift)
 import Control.Monad.Logic.Class (MonadLogic)
 import Control.Monad.ST.Lazy (ST, runST)
 import Control.Monad.Trans.Reader (ReaderT (..), asks, local)
+import Data.Maybe (isJust)
 import Data.STRef.Lazy (STRef, newSTRef, readSTRef, writeSTRef)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -87,7 +88,9 @@ evalWith f p = runST $ f $ runReaderT (unPredicate p) defaultSettings
     }
 
 -- |A unifiable and possibly uninstantiated value.
-data Var a s = Reference (STRef s (Maybe (Var a s))) | Binding (a s)
+data Var a s
+    = Reference (STRef s (Maybe (Var a s)))
+    | Binding (a s)
 
 -- |An unbound variable. Used for the occurs check.
 newtype Unbound a s = Unbound (STRef s (Maybe (Var a s)))
@@ -102,26 +105,31 @@ bind = Binding
 
 -- |@unbound x@ succeeds if and only if @x@ is an unbound variable.
 unbound :: Term a => Var a s -> Predicate s ()
-unbound (Binding _) = empty
-unbound (Reference x) = readRef x >>= maybe empty (return . const ())
+unbound (Binding   _) = empty
+unbound (Reference x) = do
+    value <- readRef x
+    guard (isJust value)
+    return ()
 
 instance Term a => Term (Var a) where
     type Collapse (Var a) = Collapse a
 
-    collapse (Binding x) = collapse x
-    collapse (Reference x) =
-        readRef x >>=
-        maybe (error "Value is not sufficiently instantiated.") collapse
+    collapse (Binding   x) = collapse x
+    collapse (Reference x) = do
+        value <- readRef x
+        case value of
+            Nothing -> error "Value is not sufficiently instantiated."
+            Just x' -> collapse x'
 
     unify v1 v2 = do
         x <- reduce v1
         y <- reduce v2
         unifyReduced x y
       where
-        unifyReduced (Binding x) (Binding y) = unify x y
+        unifyReduced (Binding   x) (Binding   y)          = unify x y
         unifyReduced (Reference x) (Reference y) | x == y = return ()
-        unifyReduced (Reference x) y = unifyRef x y
-        unifyReduced x (Reference y) = unifyRef y x
+        unifyReduced (Reference x) y                      = unifyRef x y
+        unifyReduced x             (Reference y)          = unifyRef y x
 
         unifyRef x y = do
             check <- Predicate (asks occursCheck)
@@ -134,6 +142,11 @@ instance Term a => Term (Var a) where
 
             writeRef x (Just y)
 
+        -- Takes a Var and returns a Var such that the output is
+        -- either a Reference to Nothing, or a Binding.
+        --
+        -- reduce (Reference (Just x)) = reduce x
+        -- reduce x                    = x
         reduce v@(Reference x) = do
             result <- readRef x
             case result of
@@ -141,9 +154,13 @@ instance Term a => Term (Var a) where
                 Just x' -> reduce x'
         reduce v = return v
 
-    occurs x@(Unbound ref) = occurs'
+    occurs x@(Unbound ref) = occursIn
       where
-        occurs' (Binding y) = occurs x y
-        occurs' (Reference y)
+        occursIn (Binding   y) = occurs x y
+        occursIn (Reference y)
             | unsafeCoerce ref == y = return True
-            | otherwise = readRef y >>= maybe (return False) occurs'
+            | otherwise             = do
+                value <- readRef y
+                case value of
+                    Nothing -> return False
+                    Just y' -> occursIn y'
