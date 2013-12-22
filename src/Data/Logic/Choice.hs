@@ -33,6 +33,9 @@ instance (Term a, Term b) => Term (Choice a b) where
     unify (B x) (B y) = unify x y
     unify _ _ = false
 
+    occurs v (A x) = occurs v x
+    occurs v (B x) = occurs v x
+
 -- |Constructs a choice.
 choice :: (Term a, Term b) => Either (Var a s) (Var b s) -> Var (Choice a b) s
 choice = bind . either A B

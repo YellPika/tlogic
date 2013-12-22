@@ -33,6 +33,9 @@ instance Term a => Term (List a) where
     unify (Cons x xs) (Cons y ys) = unify x y >> unify xs ys
     unify _ _ = false
 
+    occurs _ Nil = return False
+    occurs v (Cons x xs) = (||) <$> occurs v x <*> occurs v xs
+
 -- |Creates a new term list.
 list :: Term a => [Var a s] -> Var (List a) s
 list [] = bind Nil

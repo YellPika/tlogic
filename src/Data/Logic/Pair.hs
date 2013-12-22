@@ -25,8 +25,14 @@ data Pair a b s = Pair (Var a s) (Var b s)
 
 instance (Term a, Term b) => Term (Pair a b) where
     type Collapse (Pair a b) = (Collapse a, Collapse b)
+
     collapse (Pair x y) = (,) <$> collapse x <*> collapse y
-    unify (Pair x y) (Pair x' y') = unify x x' >> unify y y'
+
+    unify (Pair x y) (Pair x' y') = do
+        unify x x'
+        unify y y'
+
+    occurs v (Pair x y) = (||) <$> occurs v x <*> occurs v y
 
 -- |Constructs a pair of terms.
 pair :: (Term a, Term b) => Var a s -> Var b s -> Var (Pair a b) s

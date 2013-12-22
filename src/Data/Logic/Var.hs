@@ -8,7 +8,7 @@ module Data.Logic.Var (
     from, from2, from3,
 
     -- * Binding
-    bind,
+    bind, unbound,
 
     -- * Unification and Instantiation
     is, inst

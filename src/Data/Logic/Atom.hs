@@ -15,6 +15,7 @@ instance Eq a => Term (Atom a) where
     type Collapse (Atom a) = a
     collapse (Atom x) = return x
     unify (Atom x) (Atom y) = bool (x == y)
+    occurs _ _ = return False
 
 -- |Constructs an atom.
 atom :: Eq a => a -> Var (Atom a) s

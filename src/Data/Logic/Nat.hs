@@ -32,6 +32,9 @@ instance Term Nat where
     unify (Next n) (Next m) = unify n m
     unify _ _ = false
 
+    occurs _ Zero = return False
+    occurs v (Next x) = occurs v x
+
 -- |Constructs a natural number.
 nat :: Integer -> Var Nat s
 nat n | n == 0 = zero
